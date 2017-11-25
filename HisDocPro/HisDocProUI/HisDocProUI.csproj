@@ -108,6 +108,11 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Tools\Delimiter.cs" />
+    <Compile Include="Tools\ToolsIOCSV.cs" />
+    <Compile Include="View\ViewToken.xaml.cs">
+      <DependentUpon>ViewToken.xaml</DependentUpon>
+    </Compile>
     <Page Include="ViewMain.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -116,11 +121,18 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Model\ModelToken.cs" />
+    <Compile Include="Renderer\BitmapFast.cs" />
+    <Compile Include="Renderer\ModelRendererBitmapSource.cs" />
     <Compile Include="Tools\ToolsPDF.cs" />
     <Compile Include="ViewMain.xaml.cs">
       <DependentUpon>ViewMain.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="View\ViewToken.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Model\ModelMain.cs" />
@@ -151,9 +163,7 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="View\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -3,11 +3,13 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:HisDocProUI.View"
+        xmlns:view="clr-namespace:HisDocProUI.View"
         mc:Ignorable="d"
-        Title="MainWindow" Height="800" Width="1000">
+        Title="MainWindow" Height="800" Width="1400">
     <Grid Drop="DropCall" AllowDrop="true">
         <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200" />
+            <ColumnDefinition Width="6" />
             <ColumnDefinition Width="200" />
             <ColumnDefinition Width="6" />
             <ColumnDefinition Width="1*" />
@@ -18,13 +20,24 @@
             <RowDefinition Height="6" />
             <RowDefinition Height="24" />
             <RowDefinition Height="6" />
+            <RowDefinition Height="24" />
+            <RowDefinition Height="6" />
+            <RowDefinition Height="1*" />
+            <RowDefinition Height="6" />
             <RowDefinition Height="1*" />
         </Grid.RowDefinitions>
         
-        <Button Grid.Row="0" Grid.Column="0" Command="{Binding CommandParse}" Content="Parse"/>
+        <Label Grid.Row="0" Grid.Column="0" Content="Initial Rotation"/>
+        <TextBox Grid.Row="0" Grid.Column="2" Text="{Binding InitialRotation}"/>
+        <Label Grid.Row="2" Grid.Column="0" Content="Initial Threshold"/>
+        <TextBox Grid.Row="2" Grid.Column="2" Text="{Binding InitialThreshold}"/>
+        <Label Grid.Row="4" Grid.Column="0" Content="Fine Rotation"/>
+        <TextBox Grid.Row="4" Grid.Column="2" Text="{Binding FineRotation}"/>
 
-        <Image Grid.Row="0" Grid.Column="2" Source="{Binding AnimationManager.AnimationSelected.Image.Read}" />
-        <ListBox Grid.Row="4" Grid.Column="0" ItemsSource ="{Binding FileList}" SelectedItem="{Binding FileSelected, Mode=TwoWay}">
+        <Button Grid.Row="0" Grid.Column="6" Command="{Binding CommandParse}" Content="Parse"/>
+
+       
+        <ListBox Grid.Row="6" Grid.Column="0" ItemsSource ="{Binding FileList}" SelectedItem="{Binding FileSelected, Mode=TwoWay}">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <Label Content="{Binding}"/>
@@ -32,6 +45,16 @@
             </ListBox.ItemTemplate>
         </ListBox>
 
-
+        <ListBox Grid.Row="8" Grid.Column="0"  ItemsSource ="{Binding TokenList}" SelectedItem="{Binding TokenSelected, Mode=TwoWay}">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Image Width="60" Height="60" Source="{Binding Image}"/>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+        <view:ViewToken Grid.Row="8" Grid.Column="2" DataContext="{Binding TokenSelected}"/>
+        
+        <Image Grid.Row="6" Grid.Column="4" Source="{Binding ImageSourceSource}"/>
+        <Image Grid.Row="8" Grid.Column="4" Source="{Binding ImageSourceTarget}"/>
     </Grid>
 </Window>
