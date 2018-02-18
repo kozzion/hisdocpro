@@ -22,22 +22,32 @@
             <RowDefinition Height="6" />
             <RowDefinition Height="24" />
             <RowDefinition Height="6" />
+            <RowDefinition Height="24" />
+            <RowDefinition Height="6" />
+            <RowDefinition Height="24" />
+            <RowDefinition Height="6" />
             <RowDefinition Height="1*" />
             <RowDefinition Height="6" />
             <RowDefinition Height="1*" />
+            <RowDefinition Height="6" />
+            <RowDefinition Height="24" />
         </Grid.RowDefinitions>
         
         <Label Grid.Row="0" Grid.Column="0" Content="Initial Rotation"/>
         <TextBox Grid.Row="0" Grid.Column="2" Text="{Binding InitialRotation}"/>
         <Label Grid.Row="2" Grid.Column="0" Content="Initial Threshold"/>
         <TextBox Grid.Row="2" Grid.Column="2" Text="{Binding InitialThreshold}"/>
-        <Label Grid.Row="4" Grid.Column="0" Content="Fine Rotation"/>
-        <TextBox Grid.Row="4" Grid.Column="2" Text="{Binding FineRotation}"/>
-
+        <Label Grid.Row="4" Grid.Column="0" Content="Split Count Vertical"/>
+        <TextBox Grid.Row="4" Grid.Column="2" Text="{Binding SplitCountVertical}"/>
+        <Label Grid.Row="6" Grid.Column="0" Content="Line Size"/>
+        <TextBox Grid.Row="6" Grid.Column="2" Text="{Binding LineSize}"/>
+        <Label Grid.Row="8" Grid.Column="0" Content="Line Offset"/>
+        <TextBox Grid.Row="8" Grid.Column="2" Text="{Binding LineOffset}"/>
+        
         <Button Grid.Row="0" Grid.Column="6" Command="{Binding CommandParse}" Content="Parse"/>
 
        
-        <ListBox Grid.Row="6" Grid.Column="0" ItemsSource ="{Binding FileList}" SelectedItem="{Binding FileSelected, Mode=TwoWay}">
+        <ListBox Grid.Row="10" Grid.Column="0" ItemsSource ="{Binding FileList}" SelectedItem="{Binding FileSelected, Mode=TwoWay}">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <Label Content="{Binding}"/>
@@ -45,16 +55,16 @@
             </ListBox.ItemTemplate>
         </ListBox>
 
-        <ListBox Grid.Row="8" Grid.Column="0"  ItemsSource ="{Binding TokenList}" SelectedItem="{Binding TokenSelected, Mode=TwoWay}">
+        <ListBox Grid.Row="10" Grid.Column="0"  ItemsSource ="{Binding TokenList}" SelectedItem="{Binding TokenSelected, Mode=TwoWay}">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <Image Width="60" Height="60" Source="{Binding Image}"/>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
-        <view:ViewToken Grid.Row="8" Grid.Column="2" DataContext="{Binding TokenSelected}"/>
-        
-        <Image Grid.Row="6" Grid.Column="4" Source="{Binding ImageSourceSource}"/>
-        <Image Grid.Row="8" Grid.Column="4" Source="{Binding ImageSourceTarget}"/>
+        <view:ViewToken Grid.Row="10" Grid.Column="2" DataContext="{Binding TokenSelected}"/>
+
+        <Image Grid.Row="10" Grid.RowSpan="3" Grid.Column="4" Source="{Binding ImageSourceTarget}"/>
+        <Image Grid.Row="14" Grid.RowSpan="1" Grid.Column="4" Source="{Binding ImageSourceHelp}"/>
     </Grid>
 </Window>

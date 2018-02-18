@@ -1,4 +1,5 @@
-﻿using PdfSharp.Pdf;
+﻿
+using PdfSharp.Pdf;
 using PdfSharp.Pdf.Advanced;
 using PdfSharp.Pdf.IO;
 using System;
@@ -81,7 +82,7 @@ namespace HisDocProUI.Tools
         {
             // Fortunately JPEG has native support in PDF and exporting an image is just writing the stream to a file.
             byte[] stream = image.Stream.Value;
-            string target = @"D:\Projects\TesseractWrap\TesseractData\todo\test_" + count + " .jpeg";
+            string target = @"D:\Projects\hisdocpro\temp\temp_" + count + ".jpeg";
             FileStream fs = new FileStream(target, FileMode.Create, FileAccess.Write);
             count++;
             BinaryWriter bw = new BinaryWriter(fs);
