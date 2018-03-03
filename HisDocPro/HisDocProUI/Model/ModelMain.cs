@@ -130,6 +130,11 @@ namespace HisDocProUI.Model
                         PageFileList.Add(file);
                     }
                 }
+                if (PageFileList.Count != 0)
+                {
+                    PageFileSelected = PageFileList[0];
+                }
+
             });
         }
 
@@ -218,47 +223,84 @@ namespace HisDocProUI.Model
             //Bitmap[] BitmapArray = new Bitmap[1];
             Tuple<List<ConnectedComponent>, double, double>[,] componentTable = new Tuple<List<ConnectedComponent>, double, double>[PageLayout.LineCount.Value, PageLayout.ColCount.Value];
 
-            for (int i = 0; i < PageLayout.LineCount.Value; i++)
+            for (int lineIndex = 0; lineIndex < PageLayout.LineCount.Value; lineIndex++)
             {
-                for (int j = 0; j < PageLayout.ColCount.Value; j++)
+                for (int colIndex = 0; colIndex < PageLayout.ColCount.Value; colIndex++)
                 {
                     //TODO add margin?
-                    int x = (int)((PageLayout.ColSize.Value * j) + PageLayout.ColOffset.Value);
-                    int y = (int)((PageLayout.LineSize.Value * j) + PageLayout.LineOffset.Value);
+                    int x = (int)((PageLayout.ColSize.Value * colIndex) + PageLayout.ColOffset.Value);
+                    int y = (int)((PageLayout.LineSize.Value * lineIndex) + PageLayout.LineOffset.Value);
                     int w = (int)PageLayout.ColSize.Value;
                     int h = (int)PageLayout.LineSize.Value;
                     Bitmap bitmap = new Crop(new Rectangle(x, y, w, h)).Apply(imageBinInvert);
-                    List<ConnectedComponent> lineComponentList = GetTokens(bitmap);
-                    componentTable[i,j] = new Tuple<List<ConnectedComponent>, double, double>(lineComponentList, x, y);
+                    List<ConnectedComponent> lineComponentList = new List<ConnectedComponent>();
+                    //if ((i == 0) && (j == 0))
+                    //{
+                    //    lineComponentList = GetTokens(bitmap);
+                    //}
+
+                    //if (lineIndex == 0)
+                   // {
+                    //    lineComponentList = GetTokens(bitmap);
+                    //}
+                    lineComponentList = GetTokens(bitmap);
+                    componentTable[lineIndex,colIndex] = new Tuple<List<ConnectedComponent>, double, double>(lineComponentList, x, y);
                 }
             }
 
-            ImageParse = RenderBitmap(bitmapRot, rl_list, componentTable);
-
+            //ImageParse = RenderBitmap(bitmapRot, rl_list, componentTable);
+            ImageLayout = RenderBitmap(bitmapRot, rl_list, componentTable);
             //Create output
             string[,] string_table = new string[PageLayout.LineCount.Value, PageLayout.ColCount.Value];
             for (int i = 0; i < PageLayout.LineCount.Value; i++)
             {
                 for (int j = 0; j < PageLayout.ColCount.Value; j++)
                 {
-                    string_table[i,j] = TokensToString(componentTable[i,j].Item1, 3, " ");
+                    string_table[i,j] = TokensToString(componentTable[i,j].Item1, 3, " ", 2);
                 }
             }
             string csvFileSelected = PageFileSelected.Replace(".png", ".csv");
-            ToolsIOCSV.WriteCSVFile(csvFileSelected, string_table);           
+            ToolsIOCSV.WriteCSVFile(csvFileSelected, string_table, KozzionCore.IO.CSV.Delimiter.SemiColon);           
         }
 
 
-        private string TokensToString(List<ConnectedComponent > component, double splitThreshold, string splitChar)
+        private string TokensToString(List<ConnectedComponent > component, double splitThreshold, string splitChar, double overlapTolerance)
         {
-            component.Sort((x, y) => (x.Mean0 - x.Width).CompareTo(y.Mean0 - y.Width));
-            //TODO Remove overlapping kokens here
+            if (component.Count == 0)
+            {
+                return "";
+            }
+
+            component.Sort((x, y) => (x.MeanX - x.Width).CompareTo(y.MeanX - y.Width));
+            
+            //Remove overlapping kokens here
+            int tokenIndex = 1;
+            while (tokenIndex < component.Count)
+            {
+                ConnectedComponent last = component[tokenIndex - 1];
+                ConnectedComponent current = component[tokenIndex];
+                Console.WriteLine(last.CorrMax);
+                //If there is overlap
+                double overlap = last.MeanX - (current.MeanX - current.Width);
+                if (overlapTolerance < overlap) {
+                    if (last.CorrMax < current.CorrMax) {
+                        component.RemoveAt(tokenIndex - 1);
+                    } else {
+                        component.RemoveAt(tokenIndex);
+                    }
+
+                } else {
+                    tokenIndex++;
+                }
+            }
+
+
 
             string line = "";
             for (int i = 0; i < component.Count -1; i++)
             {
                 line = line + component[i].Token.Label;
-                if (splitThreshold < (component[i + 1].Mean0 - component[i + 1].Width) - component[i].Mean0)
+                if (splitThreshold < (component[i + 1].MeanX - component[i + 1].Width) - component[i].MeanX)
                 {
                     line = line + splitChar;
                 }
@@ -390,8 +432,8 @@ namespace HisDocProUI.Model
 
         private void DrawComponent(Bitmap bitmap, ConnectedComponent comp, double offsetX, double offSetY)
         {
-            int left = (int)comp.Mean0 + (int)offsetX;
-            int top = (int)comp.Mean1 + (int)offSetY;
+            int left = (int)comp.MeanX + (int)offsetX;
+            int top = (int)comp.MeanY + (int)offSetY;
 
             Rectangle rect = new Rectangle(left, top, comp.Width, comp.Height);
             
@@ -412,8 +454,8 @@ namespace HisDocProUI.Model
 
         private void DrawComponent(Bitmap bitmap, ConnectedComponent comp)
         {
-            int left = (int)comp.Mean0;
-            int top = (int)comp.Mean1;
+            int left = (int)comp.MeanX;
+            int top = (int)comp.MeanY;
 
             Rectangle rect = new Rectangle(left, top, comp.Width, comp.Height);
             RectangleF rectf = new RectangleF(left, top, comp.Width, comp.Height);

@@ -30,7 +30,7 @@ namespace HisDocProCL.Tools
                             {                    
                                 ProcessNode(image, threshold, blacklist, queue, node_list);
                             }
-                            cc.Add(new ConnectedComponent(node_list, token));
+                            cc.Add(new ConnectedComponent(node_list, token, image));
                         }
                     }
                 }
@@ -88,7 +88,8 @@ namespace HisDocProCL.Tools
                             {
                                 ProcessNode(image, 0, blacklist, queue, node_list);
                             }
-                            cc.Add(new ConnectedComponent(node_list, new ModelToken()));
+                            throw new NotImplementedException();
+                            //cc.Add(new ConnectedComponent(node_list, new ModelToken(), null));
                         }
                     }
                 }

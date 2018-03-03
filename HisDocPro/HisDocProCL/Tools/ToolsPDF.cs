@@ -67,6 +67,11 @@ namespace HisDocProUI.Tools
             }
             switch (filter)
             {
+
+                case "/CCITTFaxDecode": //Binary fax encoding
+                    throw new NotImplementedException(); 
+                    break;
+
                 case "/DCTDecode":
                     ExportJpegImage(image, ref count, targeList);
                     break;
@@ -96,8 +101,17 @@ namespace HisDocProUI.Tools
             int width = image.Elements.GetInteger(PdfImage.Keys.Width);
             int height = image.Elements.GetInteger(PdfImage.Keys.Height);
             int bitsPerComponent = image.Elements.GetInteger(PdfImage.Keys.BitsPerComponent);
-            
+            byte[] stream = image.Stream.Value;
+
             throw new NotImplementedException();
+            string target = @"D:\Projects\hisdocpro\temp\temp_" + count + ".png";
+            FileStream fs = new FileStream(target, FileMode.Create, FileAccess.Write);
+            count++;
+            BinaryWriter bw = new BinaryWriter(fs);
+            bw.Write(stream);
+            bw.Close();
+            targeList.Add(target);
+    
             // TODO: You can put the code here that converts vom PDF internal image format to a Windows bitmap
             // and use GDI+ to save it in PNG format.
             // It is the work of a day or two for the most important formats. Take a look at the file
