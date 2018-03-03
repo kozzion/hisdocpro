@@ -9,6 +9,32 @@ namespace HisDocProCL.Tools
 {
     public class ToolsFindLine
     {
+
+        public static List<RenderLine> FindLinesH(double width, double heigth, double size, double offset, int count)
+        {
+       
+            List<RenderLine> renderLines = new List<RenderLine>();
+            for (int i = 0; i < count + 1; i++)
+            {
+                double y = (i * size) + offset;        
+                renderLines.Add(new RenderLine(0, y, width, y));
+            }               
+            return renderLines;
+        }
+
+
+        public static List<RenderLine> FindLinesV(double width, double heigth, double size, double offset, int count)
+        {
+            List<RenderLine> renderLines = new List<RenderLine>();
+            for (int i = 0; i < count + 1; i++)
+            {
+                double x = (i * size) + offset;
+                renderLines.Add(new RenderLine(x, 0, x, heigth));
+            }
+            return renderLines;
+        }
+
+
         public static List<RenderLine> FindLinesH(double width, double heigth, double lineSize, double lineOffset)
         {
             double y = lineOffset;

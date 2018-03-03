@@ -16,18 +16,25 @@ using HisDocProCL.Tools;
 using HisDocProUI.Renderer;
 using System.Drawing.Drawing2D;
 using System.IO;
+using HisDocProCL.Model;
+using System.Threading;
 
 namespace HisDocProUI.Model
 {
-    public class ModelMain : ReactiveObject
+    public class ModelMain : ReactiveObject, IModelApplication
     {
-        public IList<string> FileList { get; private set; }
-        private string fileSelected;
-        public string FileSelected
+        public IList<string> PageFileList { get; private set; }
+        private string _pageFileSelected;
+        public string PageFileSelected
         {
-            get { return this.fileSelected; }
-            set { this.RaiseAndSetIfChanged(ref this.fileSelected, value); }
+            get { return this._pageFileSelected; }
+            set { this.RaiseAndSetIfChanged(ref this._pageFileSelected, value);
+                LoadLayout();
+                ExecuteRenderLayout();
+            }
         }
+
+
 
         public IList<ModelToken> TokenList { get; private set; }
         private ModelToken _tokenlSelected;
@@ -37,91 +44,93 @@ namespace HisDocProUI.Model
             set { this.RaiseAndSetIfChanged(ref this._tokenlSelected, value); }
         }
 
-
-        private Bitmap bitmapSource;
-
-
-
-        private ImageSource imageSourceTarget;
-        public ImageSource ImageSourceTarget
+        private ModelPageLayout _pageLayout;
+        public ModelPageLayout PageLayout
         {
-            get { return this.imageSourceTarget; }
-            set { this.RaiseAndSetIfChanged(ref this.imageSourceTarget, value); }
+            get { return this._pageLayout; }
+            set { this.RaiseAndSetIfChanged(ref this._pageLayout, value); }
         }
 
-        private ImageSource imageSourceHelp;
-        public ImageSource ImageSourceHelp
+        private ImageSource _imageLayout;
+        public ImageSource ImageLayout
         {
-            get { return this.imageSourceHelp; }
-            set { this.RaiseAndSetIfChanged(ref this.imageSourceHelp, value); }
+            get { return this._imageLayout; }
+            set { this.RaiseAndSetIfChanged(ref this._imageLayout, value); }
         }
 
-        private double _initialRotation;
-        public double InitialRotation
+        private ImageSource _imageParse;
+        public ImageSource ImageParse
         {
-            get { return this._initialRotation; }
-            set { this.RaiseAndSetIfChanged(ref this._initialRotation, value); }
-        }
-
-        private int _initialThreshold;
-        public int InitialThreshold
-        {
-            get { return this._initialThreshold; }
-            set { this.RaiseAndSetIfChanged(ref this._initialThreshold, value); }
+            get { return this._imageParse; }
+            set { this.RaiseAndSetIfChanged(ref this._imageParse, value); }
         }
 
 
-        private int _splitCountVertical;
-        public int SplitCountVertical
-        {
-            get { return this._splitCountVertical; }
-            set { this.RaiseAndSetIfChanged(ref this._splitCountVertical, value); }
-        }
-
-        private int _splitCountHotizontal;
-        public int SplitCountHotizontal
-        {
-            get { return this._splitCountHotizontal; }
-            set { this.RaiseAndSetIfChanged(ref this._splitCountHotizontal, value); }
-        }
-
-        private double _lineSize;
-        public double LineSize
-        {
-            get { return this._lineSize; }
-            set { this.RaiseAndSetIfChanged(ref this._lineSize, value); }
-        }
-
-        private double _lineOffset;
-        public double LineOffset
-        {
-            get { return this._lineOffset; }
-            set { this.RaiseAndSetIfChanged(ref this._lineOffset, value); }
-        }
-
+        public ReactiveCommand CommandRenderLayout { get; private set; }
         public ReactiveCommand CommandParse { get; private set; }
 
+
+
+        private FileSystemWatcher _watcher;
+        private Bitmap bitmapSource;
+        private string pageDir = @"D:\Projects\hisdocpro\pages\";
+        private string tokenDir = @"D:\Projects\hisdocpro\tokens\";
+
         public ModelMain()
-        {
-            this.FileList = new ObservableCollection<string>();
+        {     
+            // string files = Directory.GetFiles(pageDir);
+            this.PageFileList = new ObservableCollection<string>();
             this.TokenList = new ObservableCollection<ModelToken>();
-            this.CommandParse = ReactiveCommand.Create(ExecuteParse);
-            this.InitialRotation = 180.2;
-            this.InitialThreshold = 100;
-            this.LineSize = 23.5;
-            this.LineOffset = 283.2;
+            this.PageLayout = new ModelPageLayout(this, null, null);
 
+            this.CommandRenderLayout = ReactiveCommand.Create(ExecuteRenderLayout);
+            this.CommandParse = ReactiveCommand.Create(ExecuteParseAll);
 
-            this.SplitCountVertical = 0;
-            LoadPDF(@"D:\Projects\hisdocpro\data\PrijscourantPagina.pdf");
-
-
+            //LoadPDF(@"D:\Projects\hisdocpro\data\PrijscourantPagina.pdf");
             //LoadPDF(@"D:\Projects\hisdocpro\data\Tabellen1941deels.pdf"
-            //LoadPNG(@"D:\Projects\hisdocpro\plot\temp_1.png");
+            //AddPNG(@"D:\Projects\hisdocpro\plot\temp_1.png");
             //LoadPNG(@"D:\Projects\hisdocpro\plot\temp_2.png");
             //LoadPNG(@"D:\Projects\hisdocpro\plot\temp_3.png");
-            LoadTokens(@"D:\Projects\hisdocpro\tokens\");
-            ExecuteParse();
+            LoadTokens(tokenDir);
+            AddPageWatcher();
+            LoadPages(null, null);
+        }
+
+        private void LoadLayout()
+        {
+            if (PageFileSelected != null)
+            {
+                string layoutFileSelected = PageFileSelected.Replace(".png", ".json");
+                this.PageLayout = new ModelPageLayout(this, layoutFileSelected, this.PageLayout);
+            }
+        }
+
+        private void AddPageWatcher()
+        {
+            _watcher = new FileSystemWatcher();
+            _watcher.Path = pageDir;
+            //_watcher.NotifyFilter = NotifyFilters.LastWrite;
+            _watcher.Filter = "*.png";
+            _watcher.Created += new FileSystemEventHandler(LoadPages);
+            _watcher.Changed += new FileSystemEventHandler(LoadPages);
+            _watcher.Deleted += new FileSystemEventHandler(LoadPages);
+            _watcher.EnableRaisingEvents = true;
+        }
+
+        private void LoadPages(object sender, FileSystemEventArgs e)
+        {
+            App.Current.Dispatcher.Invoke(delegate
+            {
+                PageFileList.Clear();
+                string[] files = Directory.GetFiles(pageDir);
+                foreach (var file in files)
+                {
+                    if (file.Split('.').Last().Equals("png"))
+                    {
+                        PageFileList.Add(file);
+                    }
+                }
+            });
         }
 
         private void LoadTokens(string path)
@@ -133,88 +142,114 @@ namespace HisDocProUI.Model
             }
         }
 
-        private void ExecuteParse()
+
+        public void RenderLayout()
         {
-            if (FileSelected == null)
+            ExecuteRenderLayout();
+        }
+
+        private void ExecuteRenderLayout()
+        {
+            if (PageFileSelected == null)
             {
                 return;
             }
-            bitmapSource = new Bitmap(FileSelected);
+            bitmapSource = new Bitmap(PageFileSelected);
             if (bitmapSource == null)
             {
                 return;
             }
-            if (bitmapSource.PixelFormat == System.Drawing.Imaging.PixelFormat.Format8bppIndexed)
+
+            if ((bitmapSource.PixelFormat == System.Drawing.Imaging.PixelFormat.Format8bppIndexed) || 
+                (bitmapSource.PixelFormat == System.Drawing.Imaging.PixelFormat.Format32bppArgb))
+            {
+                bitmapSource = ConvertTo24(bitmapSource);
+            }
+            PageLayout.Save();
+
+            //Rotate 
+            var bitmapRot = new RotateBilinear(PageLayout.Rotation.Value, true).Apply(bitmapSource);
+            var linesH = ToolsFindLine.FindLinesH(bitmapRot.Width, bitmapRot.Height, PageLayout.LineSize.Value, PageLayout.LineOffset.Value, PageLayout.LineCount.Value);
+            var linesV = ToolsFindLine.FindLinesV(bitmapRot.Width, bitmapRot.Height, PageLayout.ColSize.Value, PageLayout.ColOffset.Value, PageLayout.ColCount.Value);
+            List<RenderLine> rl_list = new List<RenderLine>();
+            rl_list.AddRange(linesH);
+            rl_list.AddRange(linesV);
+
+
+            //var linesV = ToolsFindLine.FindLinesV(bitmapRot.Width, bitmapRot.Height, PageLayout.LineSize.Value, PageLayout.LineOffset.Value);
+            ImageLayout = RenderBitmap(bitmapRot, rl_list);
+        }
+
+        private void ExecuteParseAll()
+        {
+            if (PageFileSelected == null)
+            {
+                return;
+            }
+            bitmapSource = new Bitmap(PageFileSelected);
+            if (bitmapSource == null)
+            {
+                return;
+            }
+            if ((bitmapSource.PixelFormat == System.Drawing.Imaging.PixelFormat.Format8bppIndexed) ||
+                  (bitmapSource.PixelFormat == System.Drawing.Imaging.PixelFormat.Format32bppArgb))
             {
                 bitmapSource = ConvertTo24(bitmapSource);
             }
 
-            //Convert to gray
-            //Rotate 
-            var bitmapRot = new RotateBilinear(InitialRotation, true).Apply(bitmapSource);
 
+            //Rotate 
+            var bitmapRot = new RotateBilinear(PageLayout.Rotation.Value, true).Apply(bitmapSource);
+            var linesH = ToolsFindLine.FindLinesH(bitmapRot.Width, bitmapRot.Height, PageLayout.LineSize.Value, PageLayout.LineOffset.Value, PageLayout.LineCount.Value);
+            var linesV = ToolsFindLine.FindLinesV(bitmapRot.Width, bitmapRot.Height, PageLayout.ColSize.Value, PageLayout.ColOffset.Value, PageLayout.ColCount.Value);
+            List<RenderLine> rl_list = new List<RenderLine>();
+            rl_list.AddRange(linesH);
+            rl_list.AddRange(linesV);
+
+            //Convert to gray
             var imageGray = new Grayscale(0.2125, 0.7154, 0.0721).Apply(bitmapRot);
             //var imageGrayInvert = new Invert().Apply(imageGray);
             //var imageDoubleInvert = ToolsConvolution.BitMapToDoubleArray(imageGrayInvert);
-            var linesH = ToolsFindLine.FindLinesH(bitmapRot.Width, bitmapRot.Height, LineSize, LineOffset);
             var imageBin = new Threshold(100).Apply(imageGray);
             var imageBinInvert = new Invert().Apply(imageBin);
 
 
-
-            //var imageBinInvertFilteredBig = ToolsConnectedComponent.Filter(imageBinInvert, 100);
-            //var imageBinInvertFilteredBigDouble = ToolsConvolution.BitMapToDoubleArray(imageGrayInvert);
-            //var linesV = ToolsFindLine.FindLinesV(imageBinInvertFilteredBigDouble, AlfaV);
-
-            //List<RenderLine> linesH = SplitLines(imageBinInvertFiltered, 0, 3, 0.1);
-            //List<RenderLine> linesV = SplitLines(imageBinInvertFilteredBig, 90, 5, 0.1);
-
-            List<RenderLine> linesList = new List<RenderLine>();
-            linesList.AddRange(linesH);
-            //linesList.AddRange(linesV);
-
-            var image_bin = new Threshold(100).Apply(imageGray);
-            image_bin = new Invert().Apply(image_bin);
-
-
-
             //Tuple<List<ConnectedComponent>, double, double>[] componentSectionList = new Tuple<List<ConnectedComponent>, double, double>[1];
             //Bitmap[] BitmapArray = new Bitmap[1];
+            Tuple<List<ConnectedComponent>, double, double>[,] componentTable = new Tuple<List<ConnectedComponent>, double, double>[PageLayout.LineCount.Value, PageLayout.ColCount.Value];
 
-            List<Tuple<List<ConnectedComponent>, double, double>> componentSectionList = new List<Tuple<List<ConnectedComponent>, double, double>>();
-            Bitmap[] BitmapArray = new Bitmap[linesH.Count - 1];
-
-             for (int i = 0; i < linesH.Count - 1; i++)
-            //for (int i = 0; i < 1; i++)
+            for (int i = 0; i < PageLayout.LineCount.Value; i++)
             {
-                int x = 0;
-                int y = (int)linesH[i].Y0;
-                int w = imageBinInvert.Width;
-                int h = (int)(linesH[i + 1].Y0 - linesH[i].Y0);
-                BitmapArray[i] = new Crop(new Rectangle(x, y, w, h)).Apply(imageBinInvert);
-            //    List<ConnectedComponent> lineComponentList = GetTokens(BitmapArray[i]);
-            //    componentSectionList[i] = new Tuple<List<ConnectedComponent>, double, double>(lineComponentList, x, y);
-            };
-
-
-            //List<ConnectedComponent> component_list = GetTokens(imageBinInvert);
-            //List<ConnectedComponent> component_list = new List<ConnectedComponent>();
-            ImageSourceTarget = RenderBitmap(bitmapRot, componentSectionList, linesList);
-
-            //ImageSourceHelp = RenderBitmap(imageGrayInvert);
-
-            //Create output
-            List<string> lines = new List<string>();
-            foreach (var item in componentSectionList)
-            {
-                lines.Add( TokensToLine(item.Item1, 3, " "));
+                for (int j = 0; j < PageLayout.ColCount.Value; j++)
+                {
+                    //TODO add margin?
+                    int x = (int)((PageLayout.ColSize.Value * j) + PageLayout.ColOffset.Value);
+                    int y = (int)((PageLayout.LineSize.Value * j) + PageLayout.LineOffset.Value);
+                    int w = (int)PageLayout.ColSize.Value;
+                    int h = (int)PageLayout.LineSize.Value;
+                    Bitmap bitmap = new Crop(new Rectangle(x, y, w, h)).Apply(imageBinInvert);
+                    List<ConnectedComponent> lineComponentList = GetTokens(bitmap);
+                    componentTable[i,j] = new Tuple<List<ConnectedComponent>, double, double>(lineComponentList, x, y);
+                }
             }
 
-            File.WriteAllLines(@"D:\Projects\hisdocpro\plot\temp_1_out.txt", lines);
+            ImageParse = RenderBitmap(bitmapRot, rl_list, componentTable);
+
+            //Create output
+            string[,] string_table = new string[PageLayout.LineCount.Value, PageLayout.ColCount.Value];
+            for (int i = 0; i < PageLayout.LineCount.Value; i++)
+            {
+                for (int j = 0; j < PageLayout.ColCount.Value; j++)
+                {
+                    string_table[i,j] = TokensToString(componentTable[i,j].Item1, 3, " ");
+                }
+            }
+            string csvFileSelected = PageFileSelected.Replace(".png", ".csv");
+            ToolsIOCSV.WriteCSVFile(csvFileSelected, string_table);           
         }
 
 
-        private string TokensToLine(List<ConnectedComponent > component, double splitThreshold, string splitChar)
+        private string TokensToString(List<ConnectedComponent > component, double splitThreshold, string splitChar)
         {
             component.Sort((x, y) => (x.Mean0 - x.Width).CompareTo(y.Mean0 - y.Width));
             //TODO Remove overlapping kokens here
@@ -243,7 +278,7 @@ namespace HisDocProUI.Model
             Parallel.For(0, TokenList.Count, tokenIndex =>
             {
                 ModelToken token = TokenList[tokenIndex];
-                Bitmap bitmapKernel = token.GetKernel(this.InitialThreshold);
+                Bitmap bitmapKernel = token.GetKernel(this.PageLayout.Threshold.Value);
                 // create filter
                 bitmapKernel = new Grayscale(0.2125, 0.7154, 0.0721).Apply(bitmapKernel);
                 bitmapKernel = new Threshold(100).Apply(bitmapKernel);
@@ -262,93 +297,7 @@ namespace HisDocProUI.Model
 
             return component_list;
         }
-
-
-        private List<RenderLine> SplitLines(Bitmap imageBin, double thetaTarget, double thetaTolerance, double intensityThreshold)
-        {
-
-            HoughLineTransformation lineTransform = new HoughLineTransformation();
-            lineTransform.ProcessImage(imageBin);
-            HoughLine[] lines = lineTransform.GetLinesByRelativeIntensity(intensityThreshold);
-
-            List<RenderLine> lines_list = new List<RenderLine>();
-            int w2 = imageBin.Width / 2;
-            int h2 = imageBin.Height / 2;
-
-            foreach (HoughLine line in lines)
-            {
-                // get line's radius and theta values
-                int r = line.Radius;
-                double td = line.Theta;
-            
-
-                // check if line is in lower part of the image
-                if (r < 0)
-                {
-                    td += 180;
-                    r = -r;
-                }
-
-                // convert degrees to radians
-                var t = (td / 180) * Math.PI;
-
-                // get image centers (all coordinate are measured relative
-                // to center)
-
-                double x0 = 0, x1 = 0, y0 = 0, y1 = 0;
-
-                if (line.Theta != 0)
-                {
-                    // none-vertical line
-                    x0 = -w2; // most left point
-                    x1 = w2;  // most right point
-
-                    // calculate corresponding y values
-                    y0 = (-Math.Cos(t) * x0 + r) / Math.Sin(t);
-                    y1 = (-Math.Cos(t) * x1 + r) / Math.Sin(t);
-                }
-                else
-                {
-                    // vertical line
-                    x0 = line.Radius;
-                    x1 = line.Radius;
-
-                    y0 = h2;
-                    y1 = -h2;
-                }
-
-                if (Math.Abs(td - thetaTarget) < thetaTolerance)
-                {
-                    Console.WriteLine(td);
-
-
-                    double rot = Math.PI;
-
-                    x0 = x0 * Math.Cos(rot) - y0 * Math.Sin(rot);
-                    y0 = x0 * Math.Sin(rot) + y0 * Math.Cos(rot);
-
-                    x1 = x1 * Math.Cos(rot) - y1 * Math.Sin(rot);
-                    y1 = x1 * Math.Sin(rot) + y1 * Math.Cos(rot);
-
-
-                    x0 = w2 - x0;
-                    y0 += h2;
-
-                    x1 = w2 - x1;
-                    y1 += h2;
-                    Console.WriteLine("x0: " + x0);
-                    Console.WriteLine("y0: " + y0);
-                    Console.WriteLine("x1: " + x1);
-                    Console.WriteLine("y1: " + y1);
-                    if ((Math.Abs(y1 - y0) < 10) || (Math.Abs(x1 - x0) < 10))
-                    {
-                        lines_list.Add(new RenderLine(x0, y0, x1, y1));
-                    }
-                }
-
-            }
-            return lines_list;
-        }
+              
 
         private static Bitmap ConvertTo24(Bitmap bmpIn)
         {    
@@ -370,36 +319,55 @@ namespace HisDocProUI.Model
             return renderer.RenderedImage;
         }
 
-        private ImageSource RenderBitmap(Bitmap bitmap, List<ConnectedComponent> cc_list, List<RenderLine> rl_list)
+
+        private ImageSource RenderBitmap(Bitmap bitmap, List<RenderLine> rl_list)
         {
-            //Create un
-            foreach (var cc in cc_list)
-            {
-                DrawComponent(bitmap, cc);
-            }
             foreach (var rl in rl_list)
             {
                 DrawLine(bitmap, rl);
             }
-  
+
+            ModelRendererBitmapSource renderer = new ModelRendererBitmapSource(bitmap);
+            renderer.Render();
+            return renderer.RenderedImage;
+        }
+
+        private ImageSource RenderBitmap(Bitmap bitmap, List<RenderLine> rl_list, List<ConnectedComponent> cc_list)
+        {
+            foreach (var rl in rl_list)
+            {
+                DrawLine(bitmap, rl);
+            }
+
+            foreach (var cc in cc_list)
+            {
+                DrawComponent(bitmap, cc);
+            }
+
             ModelRendererBitmapSource renderer = new ModelRendererBitmapSource(bitmap);
             renderer.Render();
             return renderer.RenderedImage;
         }
 
 
-        private ImageSource RenderBitmap(Bitmap bitmap, IList<Tuple<List<ConnectedComponent>, double, double>> cc_tuple_list, List<RenderLine> rl_list)
+
+ 
+        private ImageSource RenderBitmap(Bitmap bitmap, List<RenderLine> rl_list, Tuple<List<ConnectedComponent>, double, double>[,] cc_tuple_list)
         {
             //Create un
-            foreach (var cc_tuple in cc_tuple_list)
+            for (int i = 0; i < cc_tuple_list.GetLength(0); i++)
             {
-                double offsetX = cc_tuple.Item2;
-                double offsetY = cc_tuple.Item3;
-                foreach (var cc in cc_tuple.Item1)
+                for (int j = 0; j < cc_tuple_list.GetLength(1); j++)
                 {
-                    DrawComponent(bitmap, cc, offsetX, offsetY);
+                    double offsetX = cc_tuple_list[i,j].Item2;
+                    double offsetY = cc_tuple_list[i, j].Item3;
+                    foreach (var cc in cc_tuple_list[i, j].Item1)
+                    {
+                        DrawComponent(bitmap, cc, offsetX, offsetY);
+                    }
                 }
             }
+       
             foreach (var rl in rl_list)
             {
                 DrawLine(bitmap, rl);
@@ -465,27 +433,28 @@ namespace HisDocProUI.Model
 
         public void LoadPDF(string filePath)
         {
-            FileList.Clear();
+            PageFileList.Clear();
             foreach (var item in ToolsPDF.Convert(filePath))
             {
-                FileList.Add(item);
+                PageFileList.Add(item);
             }
-            if (0 < FileList.Count)
+            if (0 < PageFileList.Count)
             {
-                FileSelected = FileList[0];
+                PageFileSelected = PageFileList[0];
             }
         }
 
-        public void LoadPNG(string filePath)
+        public void AddPNG(string filePath)
         {
 
-            FileList.Clear();
-         
-                FileList.Add(filePath);
-            if (0 < FileList.Count)
+            PageFileList.Clear();
+            PageFileList.Add(filePath);
+            if (0 < PageFileList.Count)
             {
-                FileSelected = FileList[0];
+                PageFileSelected = PageFileList[0];
             }
         }
+
+
     }
 }

@@ -109,8 +109,17 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Model\ModelMain.cs" />
+    <Compile Include="View\ViewPageLayout.xaml.cs">
+      <DependentUpon>ViewPageLayout.xaml</DependentUpon>
+    </Compile>
     <Compile Include="View\ViewToken.xaml.cs">
       <DependentUpon>ViewToken.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\ViewValueInt.xaml.cs">
+      <DependentUpon>ViewValueInt.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\ViewValueDouble.xaml.cs">
+      <DependentUpon>ViewValueDouble.xaml</DependentUpon>
     </Compile>
     <Page Include="ViewMain.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -124,7 +133,19 @@
       <DependentUpon>ViewMain.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="View\ViewPageLayout.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="View\ViewToken.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\ViewValueInt.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="View\ViewValueDouble.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
