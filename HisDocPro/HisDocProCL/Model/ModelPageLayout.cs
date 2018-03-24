@@ -70,10 +70,25 @@ namespace HisDocProCL.Model
             set { this.RaiseAndSetIfChanged(ref this._colCount, value); }
         }
 
+        private ModelValueInt _margin;
+        public ModelValueInt Margin
+        {
+            get { return this._margin; }
+            set { this.RaiseAndSetIfChanged(ref this._margin, value); }
+        }
+
+        private ModelValueDouble _overlap;
+        public ModelValueDouble Overlap
+        {
+            get { return this._overlap; }
+            set { this.RaiseAndSetIfChanged(ref this._overlap, value); }
+        }
 
 
+        private IModelApplication _application;
         public ModelPageLayout(IModelApplication application, string filePath, ModelPageLayout other)
         {
+            _application = application;
             _filePath = filePath;
             this._rotation = new ModelValueDouble(application.EventLayoutChanged, 0);
             this._threshold = new ModelValueInt(application.EventLayoutChanged, 0);
@@ -85,6 +100,10 @@ namespace HisDocProCL.Model
             this._colSize = new ModelValueDouble(application.EventLayoutChanged, 0);
             this._colOffset = new ModelValueDouble(application.EventLayoutChanged, 0);
             this._colCount = new ModelValueInt(application.EventLayoutChanged, 0);
+
+
+            this._margin = new ModelValueInt(application.EventLayoutChanged, 0);
+            this._overlap = new ModelValueDouble(application.EventLayoutChanged, 0);
 
             if (File.Exists(_filePath))
             {
@@ -104,6 +123,9 @@ namespace HisDocProCL.Model
                     this._colSize.Value = 20;
                     this._colOffset.Value = 100;
                     this._colCount.Value = 0;
+
+                    this._margin.Value = 0;
+                    this._overlap.Value = 0;
                 }
                 else {
                     SetValue(other.GetValue());
@@ -131,16 +153,19 @@ namespace HisDocProCL.Model
 
         private void SetValue(PageLayoutV001 layout)
         {
-            this._rotation.Value = layout.Rotation;
-            this._threshold.Value = layout.Threshold;
+            this._rotation = new ModelValueDouble(_application.EventLayoutChanged, layout.Rotation);
+            this._threshold = new ModelValueInt(_application.EventLayoutChanged, layout.Threshold);
 
-            this._lineSize.Value = layout.LineSize;
-            this._lineOffset.Value = layout.LineOffset;
-            this._lineCount.Value = layout.LineCount;
+            this._lineSize = new ModelValueDouble(_application.EventLayoutChanged, layout.LineSize);
+            this._lineOffset = new ModelValueDouble(_application.EventLayoutChanged, layout.LineOffset);
+            this._lineCount = new ModelValueInt(_application.EventLayoutChanged, layout.LineCount);
 
-            this._colSize.Value = layout.ColSize;
-            this._colOffset.Value = layout.ColOffset;
-            this._colCount.Value = layout.ColCount;
+            this._colSize = new ModelValueDouble(_application.EventLayoutChanged, layout.ColSize);
+            this._colOffset = new ModelValueDouble(_application.EventLayoutChanged, layout.ColOffset);
+            this._colCount = new ModelValueInt(_application.EventLayoutChanged, layout.ColCount);
+
+            this._margin = new ModelValueInt(_application.EventLayoutChanged, layout.Margin);
+            this._overlap = new ModelValueDouble(_application.EventLayoutChanged, layout.Overlap);
         }
 
         private PageLayoutV001 GetValue()
@@ -156,6 +181,9 @@ namespace HisDocProCL.Model
             layout.ColSize = ColSize.Value;
             layout.ColOffset = ColOffset.Value;
             layout.ColCount = ColCount.Value;
+
+            layout.Margin = Margin.Value;
+            layout.Overlap = Overlap.Value;
             return layout;
         }
 
@@ -171,6 +199,10 @@ namespace HisDocProCL.Model
             public double ColSize;
             public double ColOffset;
             public int ColCount;
+
+            public int Margin;
+            public double Overlap;
+
 
         }
     }

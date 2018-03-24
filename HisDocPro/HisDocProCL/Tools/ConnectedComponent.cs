@@ -2,6 +2,7 @@
 using HisDocProUI.Model;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 
 namespace HisDocProCl.Tools
 {
@@ -32,6 +33,16 @@ namespace HisDocProCl.Tools
             MeanX = sumx / component.Count;
             MeanY = sumy / component.Count;
             Token = token;
+        }
+
+        public Rectangle GetBound()
+        {
+            return new Rectangle((int)MeanX, (int)MeanY, Width, Height);
+        }
+
+        public override string ToString()
+        {
+            return Token.Label;
         }
     }
 }

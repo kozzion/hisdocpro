@@ -34,6 +34,8 @@
             <RowDefinition Height="24" />
             <RowDefinition Height="6" />
             <RowDefinition Height="24" />
+            <RowDefinition Height="6" />
+            <RowDefinition Height="24" />
         </Grid.RowDefinitions>
 
         <Label Grid.Row="0" Grid.Column="0" Content="Rotation"/>
@@ -54,5 +56,9 @@
         <view:ViewValueDouble Grid.Row="12" Grid.Column="2" DataContext="{Binding ColOffset}"/>
         <Label Grid.Row="14" Grid.Column="0" Content="Col Count"/>
         <view:ViewValueInt Grid.Row="14" Grid.Column="2" DataContext="{Binding ColCount}"/>
+        <Label Grid.Row="16" Grid.Column="0" Content="Overlap"/>
+        <view:ViewValueDouble Grid.Row="16" Grid.Column="2" DataContext="{Binding Overlap}"/>
+        <Label Grid.Row="18" Grid.Column="0" Content="Margin"/>
+        <view:ViewValueInt Grid.Row="18" Grid.Column="2" DataContext="{Binding Margin}"/>
     </Grid>
 </UserControl>

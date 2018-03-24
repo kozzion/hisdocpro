@@ -268,10 +268,10 @@ namespace HisDocProUI.Model
                 for (int colIndex = 0; colIndex < PageLayout.ColCount.Value; colIndex++)
                 {
                     //TODO add margin?
-                    int x = (int)((PageLayout.ColSize.Value * colIndex) + PageLayout.ColOffset.Value);
-                    int y = (int)((PageLayout.LineSize.Value * lineIndex) + PageLayout.LineOffset.Value);
-                    int w = (int)PageLayout.ColSize.Value;
-                    int h = (int)PageLayout.LineSize.Value;
+                    int x = (int)((PageLayout.ColSize.Value * colIndex) + PageLayout.ColOffset.Value) - PageLayout.Margin.Value;
+                    int y = (int)((PageLayout.LineSize.Value * lineIndex) + PageLayout.LineOffset.Value) - PageLayout.Margin.Value;
+                    int w = (int)PageLayout.ColSize.Value + (PageLayout.Margin.Value * 2);
+                    int h = (int)PageLayout.LineSize.Value + (PageLayout.Margin.Value * 2);
                     Bitmap bitmap = new Crop(new Rectangle(x, y, w, h)).Apply(imageBinInvert);
                     List<ConnectedComponent> lineComponentList = new List<ConnectedComponent>();
                     lineComponentList = GetTokens(bitmap);
@@ -287,7 +287,7 @@ namespace HisDocProUI.Model
             {
                 for (int j = 0; j < PageLayout.ColCount.Value; j++)
                 {
-                    string_table[i,j] = TokensToString(componentTable[i,j].Item1, 3, " ", 2);
+                    string_table[i,j] = TokensToString(componentTable[i,j].Item1, 3, " ");
                 }
             }
             string csvFileSelected = PageFileSelected.Replace(".png", ".csv");
@@ -295,7 +295,15 @@ namespace HisDocProUI.Model
         }
 
 
-        private string TokensToString(List<ConnectedComponent > component, double splitThreshold, string splitChar, double overlapTolerance)
+        private double ComputeOverlap(ConnectedComponent a, ConnectedComponent b)
+        {
+            Rectangle inter = Rectangle.Intersect(a.GetBound(), b.GetBound());
+            double areaInter = inter.Height * inter.Width;
+            double overlap = Math.Max(areaInter / (a.Height * a.Width), areaInter / (b.Height * b.Width));
+            return overlap;
+        }
+
+        private string TokensToString(List<ConnectedComponent > component, double splitThreshold, string splitChar)
         {
             if (component.Count == 0)
             {
@@ -308,13 +316,13 @@ namespace HisDocProUI.Model
             int tokenIndex = 1;
             while (tokenIndex < component.Count)
             {
-                ConnectedComponent last = component[tokenIndex - 1];
+                ConnectedComponent last = component[tokenIndex - 1];  
                 ConnectedComponent current = component[tokenIndex];
-                Console.WriteLine(last.CorrMax);
-                //If there is overlap
-                double overlap = last.MeanX - (current.MeanX - current.Width);
-                if (overlapTolerance < overlap) {
-                    if (last.CorrMax < current.CorrMax) {
+
+                Rectangle inter = Rectangle.Intersect(last.GetBound(), current.GetBound());
+                double overlap = ComputeOverlap(component[tokenIndex - 1], component[tokenIndex]);
+                if (PageLayout.Overlap.Value < overlap) {
+                    if (last.CorrMax * last.Token.Weigth.Value < current.CorrMax * current.Token.Weigth.Value) {
                         component.RemoveAt(tokenIndex - 1);
                     } else {
                         component.RemoveAt(tokenIndex);
@@ -435,11 +443,8 @@ namespace HisDocProUI.Model
 
         private void DrawLine(Bitmap bitmap, RenderLine rl)
         {
-            int w2 = bitmap.Width / 2;
-            int h2 = bitmap.Height / 2;
-
             Graphics g = Graphics.FromImage(bitmap);
-            System.Drawing.Pen pen = new System.Drawing.Pen(System.Drawing.Color.Blue, 3);
+            System.Drawing.Pen pen = new System.Drawing.Pen(System.Drawing.Color.Blue, 1);
             g.DrawLine(pen, (float)rl.X0, (float)rl.Y0, (float)rl.X1, (float)rl.Y1);
         }
 
@@ -453,13 +458,13 @@ namespace HisDocProUI.Model
 
             Graphics g = Graphics.FromImage(bitmap);
 
-            System.Drawing.Pen redPen = new System.Drawing.Pen(System.Drawing.Color.Red, 3);
+            System.Drawing.Pen redPen = new System.Drawing.Pen(System.Drawing.Color.Red, 1);
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.InterpolationMode = InterpolationMode.HighQualityBicubic;
             g.PixelOffsetMode = PixelOffsetMode.HighQuality;
 
             RectangleF rect_text = new RectangleF(left -2, top - 2, comp.Width, comp.Height);
-            g.DrawString(comp.Token.Label, new Font("Tahoma", 6), System.Drawing.Brushes.Red, rect_text);
+            g.DrawString(comp.Token.Label, new Font("Tahoma", 18), System.Drawing.Brushes.Red, rect_text);
             g.DrawRectangle(redPen, rect);
 
             g.Flush();
@@ -475,7 +480,7 @@ namespace HisDocProUI.Model
 
             Graphics g = Graphics.FromImage(bitmap);
 
-            System.Drawing.Pen redPen = new System.Drawing.Pen(System.Drawing.Color.Red, 3);
+            System.Drawing.Pen redPen = new System.Drawing.Pen(System.Drawing.Color.Red, 1);
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.InterpolationMode = InterpolationMode.HighQualityBicubic;
             g.PixelOffsetMode = PixelOffsetMode.HighQuality;
