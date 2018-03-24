@@ -14,30 +14,34 @@ namespace HisDocProCL.Model
 {
     public class ModelValueDouble : ReactiveObject
     {
-        public IModelApplication Application { get; }
+
         public ReactiveCommand CommandSubtractOne { get; }
         public ReactiveCommand CommandSubtractDecimal { get; }
         public ReactiveCommand CommandAddDecimal { get; }
         public ReactiveCommand CommandAddOne { get; }
 
+        private Action _action;
         private double _value;
+
+
         public double Value
         {
             get { return this._value; }
             set { this.RaiseAndSetIfChanged(ref this._value, value);
-                Application.RenderLayout();
+                _action.Invoke();
             }
         }
 
-        public ModelValueDouble(IModelApplication application, double value)
+        public ModelValueDouble(Action action, double value)
         {
-            Application = application;
+            _action = action;
             _value = value;
             this.CommandSubtractOne = ReactiveCommand.Create(ExecuteSubtractOne);
             this.CommandSubtractDecimal = ReactiveCommand.Create(ExecuteSubtractDecimal);
             this.CommandAddDecimal = ReactiveCommand.Create(ExecuteAddDecimal);
             this.CommandAddOne = ReactiveCommand.Create(ExecuteAddOne);
         }
+
 
         private void ExecuteAddOne()
         {

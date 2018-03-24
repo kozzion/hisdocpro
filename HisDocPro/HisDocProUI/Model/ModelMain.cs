@@ -18,23 +18,32 @@ using System.Drawing.Drawing2D;
 using System.IO;
 using HisDocProCL.Model;
 using System.Threading;
+using HisDocProCl.Tools;
 
 namespace HisDocProUI.Model
 {
     public class ModelMain : ReactiveObject, IModelApplication
     {
+        //TODO token changed - > save!!!
+
         public IList<string> PageFileList { get; private set; }
         private string _pageFileSelected;
         public string PageFileSelected
         {
             get { return this._pageFileSelected; }
             set { this.RaiseAndSetIfChanged(ref this._pageFileSelected, value);
-                LoadLayout();
-                ExecuteRenderLayout();
+                LoadLayoutList();
+                EventLayoutChanged();
             }
         }
 
-
+        public IList<string> LayoutFileList { get; private set; }
+        private string _layoutFileSelected;
+        public string LayoutFileSelected
+        {
+            get { return this._layoutFileSelected; }
+            set { this.RaiseAndSetIfChanged(ref this._layoutFileSelected, value); }
+        }
 
         public IList<ModelToken> TokenList { get; private set; }
         private ModelToken _tokenlSelected;
@@ -73,17 +82,18 @@ namespace HisDocProUI.Model
 
         private FileSystemWatcher _watcher;
         private Bitmap bitmapSource;
-        private string pageDir = @"D:\Projects\hisdocpro\pages\";
-        private string tokenDir = @"D:\Projects\hisdocpro\tokens\";
+        private string _pageDir = @"pages\";
+        private string _tokenDir = @"tokens\";
 
         public ModelMain()
         {     
             // string files = Directory.GetFiles(pageDir);
             this.PageFileList = new ObservableCollection<string>();
+            this.LayoutFileList = new ObservableCollection<string>();
             this.TokenList = new ObservableCollection<ModelToken>();
             this.PageLayout = new ModelPageLayout(this, null, null);
 
-            this.CommandRenderLayout = ReactiveCommand.Create(ExecuteRenderLayout);
+            this.CommandRenderLayout = ReactiveCommand.Create(EventLayoutChanged);
             this.CommandParse = ReactiveCommand.Create(ExecuteParseAll);
 
             //LoadPDF(@"D:\Projects\hisdocpro\data\PrijscourantPagina.pdf");
@@ -91,24 +101,49 @@ namespace HisDocProUI.Model
             //AddPNG(@"D:\Projects\hisdocpro\plot\temp_1.png");
             //LoadPNG(@"D:\Projects\hisdocpro\plot\temp_2.png");
             //LoadPNG(@"D:\Projects\hisdocpro\plot\temp_3.png");
-            LoadTokens(tokenDir);
+            LoadTokens();
             AddPageWatcher();
             LoadPages(null, null);
         }
 
-        private void LoadLayout()
+        private void LoadLayoutList()
         {
             if (PageFileSelected != null)
             {
-                string layoutFileSelected = PageFileSelected.Replace(".png", ".json");
+
+                string layoutDir = PageFileSelected.Replace(".png", "\\");
+                if (!Directory.Exists(layoutDir))
+                {
+                    Directory.CreateDirectory(layoutDir);
+                }
+                string[] files = Directory.GetFiles(layoutDir);
+                LayoutFileList.Clear();
+                foreach (var file in files)
+                {
+                    if (file.Split('.').Last().Equals("json"))
+                    {
+                        LayoutFileList.Add(file);
+                    }
+                }
+                if (LayoutFileList.Count == 0)
+                {
+                    string filePath = layoutDir + "\\layout_0.json";
+                    LayoutFileList.Add(filePath);
+                }
+                string layoutFileSelected = LayoutFileList[0];
                 this.PageLayout = new ModelPageLayout(this, layoutFileSelected, this.PageLayout);
             }
         }
 
         private void AddPageWatcher()
         {
+            if (!Directory.Exists(_pageDir))
+            {
+                Directory.CreateDirectory(_pageDir);
+            }
+
             _watcher = new FileSystemWatcher();
-            _watcher.Path = pageDir;
+            _watcher.Path = _pageDir;
             //_watcher.NotifyFilter = NotifyFilters.LastWrite;
             _watcher.Filter = "*.png";
             _watcher.Created += new FileSystemEventHandler(LoadPages);
@@ -118,11 +153,11 @@ namespace HisDocProUI.Model
         }
 
         private void LoadPages(object sender, FileSystemEventArgs e)
-        {
+        {   
             App.Current.Dispatcher.Invoke(delegate
             {
                 PageFileList.Clear();
-                string[] files = Directory.GetFiles(pageDir);
+                string[] files = Directory.GetFiles(_pageDir);
                 foreach (var file in files)
                 {
                     if (file.Split('.').Last().Equals("png"))
@@ -134,26 +169,33 @@ namespace HisDocProUI.Model
                 {
                     PageFileSelected = PageFileList[0];
                 }
-
             });
         }
 
-        private void LoadTokens(string path)
+        private void LoadTokens()
         {
-            string[] files = Directory.GetFiles(path);
-            foreach (var file in files)
+            if (!Directory.Exists(_tokenDir))
             {
-                TokenList.Add(new ModelToken(file));
+                Directory.CreateDirectory(_tokenDir);
+            }
+
+            string[] files = Directory.GetFiles(_tokenDir);
+            foreach (var imageFilePath in files)
+            {
+                if (imageFilePath.Substring(imageFilePath.Length - 4).Equals(".png")){ 
+                    string jsonFilePath = imageFilePath.Replace("png","json");
+                    TokenList.Add(new ModelToken(this, imageFilePath, jsonFilePath));
+                }
             }
         }
 
 
-        public void RenderLayout()
+        public void EventTokenChanged()
         {
-            ExecuteRenderLayout();
+            TokenSelected.Save();
         }
 
-        private void ExecuteRenderLayout()
+        public void EventLayoutChanged()
         {
             if (PageFileSelected == null)
             {
@@ -168,7 +210,7 @@ namespace HisDocProUI.Model
             if ((bitmapSource.PixelFormat == System.Drawing.Imaging.PixelFormat.Format8bppIndexed) || 
                 (bitmapSource.PixelFormat == System.Drawing.Imaging.PixelFormat.Format32bppArgb))
             {
-                bitmapSource = ConvertTo24(bitmapSource);
+                bitmapSource = ToolsConvolution.ConvertTo24(bitmapSource);
             }
             PageLayout.Save();
 
@@ -199,7 +241,7 @@ namespace HisDocProUI.Model
             if ((bitmapSource.PixelFormat == System.Drawing.Imaging.PixelFormat.Format8bppIndexed) ||
                   (bitmapSource.PixelFormat == System.Drawing.Imaging.PixelFormat.Format32bppArgb))
             {
-                bitmapSource = ConvertTo24(bitmapSource);
+                bitmapSource = ToolsConvolution.ConvertTo24(bitmapSource);
             }
 
 
@@ -213,8 +255,6 @@ namespace HisDocProUI.Model
 
             //Convert to gray
             var imageGray = new Grayscale(0.2125, 0.7154, 0.0721).Apply(bitmapRot);
-            //var imageGrayInvert = new Invert().Apply(imageGray);
-            //var imageDoubleInvert = ToolsConvolution.BitMapToDoubleArray(imageGrayInvert);
             var imageBin = new Threshold(100).Apply(imageGray);
             var imageBinInvert = new Invert().Apply(imageBin);
 
@@ -234,15 +274,6 @@ namespace HisDocProUI.Model
                     int h = (int)PageLayout.LineSize.Value;
                     Bitmap bitmap = new Crop(new Rectangle(x, y, w, h)).Apply(imageBinInvert);
                     List<ConnectedComponent> lineComponentList = new List<ConnectedComponent>();
-                    //if ((i == 0) && (j == 0))
-                    //{
-                    //    lineComponentList = GetTokens(bitmap);
-                    //}
-
-                    //if (lineIndex == 0)
-                   // {
-                    //    lineComponentList = GetTokens(bitmap);
-                    //}
                     lineComponentList = GetTokens(bitmap);
                     componentTable[lineIndex,colIndex] = new Tuple<List<ConnectedComponent>, double, double>(lineComponentList, x, y);
                 }
@@ -320,15 +351,8 @@ namespace HisDocProUI.Model
             Parallel.For(0, TokenList.Count, tokenIndex =>
             {
                 ModelToken token = TokenList[tokenIndex];
-                Bitmap bitmapKernel = token.GetKernel(this.PageLayout.Threshold.Value);
-                // create filter
-                bitmapKernel = new Grayscale(0.2125, 0.7154, 0.0721).Apply(bitmapKernel);
-                bitmapKernel = new Threshold(100).Apply(bitmapKernel);
-                bitmapKernel = new Invert().Apply(bitmapKernel);
-
-
-                var corr = ToolsConvolution.CorrelationFFT(imageDouble, bitmapKernel);
-                component_list_array[tokenIndex] = ToolsConnectedComponent.GetConnectedComponents(corr, 0.8, token);
+                var corr = ToolsConvolution.CorrelationFFT(imageDouble, token.GetKernel());
+                component_list_array[tokenIndex] = ToolsConnectedComponent.GetConnectedComponents(corr, token.Threshold.Value, token);
             });
 
             List<ConnectedComponent> component_list = new List<ConnectedComponent>();
@@ -341,22 +365,11 @@ namespace HisDocProUI.Model
         }
               
 
-        private static Bitmap ConvertTo24(Bitmap bmpIn)
-        {    
-            Bitmap converted = new Bitmap(bmpIn.Width, bmpIn.Height, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
-            using (Graphics g = Graphics.FromImage(converted))
-            {
-                // Prevent DPI conversion
-                g.PageUnit = GraphicsUnit.Pixel;
-                // Draw the image
-                g.DrawImageUnscaled(bmpIn, 0, 0);
-            }
-            return converted;
-        }
+  
 
-        private ImageSource RenderBitmap(Bitmap bitmapSource)
+        private ImageSource RenderBitmap(Bitmap bitmap)
         {
-            ModelRendererBitmapSource renderer = new ModelRendererBitmapSource(bitmapSource);
+            ModelRendererBitmapSource renderer = new ModelRendererBitmapSource(bitmap);
             renderer.Render();
             return renderer.RenderedImage;
         }
@@ -396,6 +409,11 @@ namespace HisDocProUI.Model
  
         private ImageSource RenderBitmap(Bitmap bitmap, List<RenderLine> rl_list, Tuple<List<ConnectedComponent>, double, double>[,] cc_tuple_list)
         {
+            foreach (var rl in rl_list)
+            {
+                DrawLine(bitmap, rl);
+            }
+
             //Create un
             for (int i = 0; i < cc_tuple_list.GetLength(0); i++)
             {
@@ -408,12 +426,7 @@ namespace HisDocProUI.Model
                         DrawComponent(bitmap, cc, offsetX, offsetY);
                     }
                 }
-            }
-       
-            foreach (var rl in rl_list)
-            {
-                DrawLine(bitmap, rl);
-            }
+            }      
 
             ModelRendererBitmapSource renderer = new ModelRendererBitmapSource(bitmap);
             renderer.Render();

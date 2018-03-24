@@ -1,8 +1,9 @@
-﻿using HisDocProUI.Model;
+﻿using HisDocProCL.Model;
+using HisDocProUI.Model;
 using System;
 using System.Collections.Generic;
 
-namespace HisDocProUI.Tools
+namespace HisDocProCl.Tools
 {
     public class ConnectedComponent
     {

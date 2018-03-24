@@ -268,5 +268,18 @@ namespace HisDocProUI.Tools
             }
             return img.ToManagedImage();
         }
+
+        public static Bitmap ConvertTo24(Bitmap bmpIn)
+        {
+            Bitmap converted = new Bitmap(bmpIn.Width, bmpIn.Height, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+            using (Graphics g = Graphics.FromImage(converted))
+            {
+                // Prevent DPI conversion
+                g.PageUnit = GraphicsUnit.Pixel;
+                // Draw the image
+                g.DrawImageUnscaled(bmpIn, 0, 0);
+            }
+            return converted;
+        }
     }
 }

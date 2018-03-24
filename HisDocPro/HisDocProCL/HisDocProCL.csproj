@@ -101,7 +101,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Model\BitmapFast.cs" />
+    <Compile Include="Model\IEventValueChanged.cs" />
     <Compile Include="Model\IModelApplication.cs" />
+    <Compile Include="Model\ModelCell.cs" />
     <Compile Include="Model\ModelPageLayout.cs" />
     <Compile Include="Model\ModelRendererBitmapSource.cs" />
     <Compile Include="Model\ModelValueInt.cs" />

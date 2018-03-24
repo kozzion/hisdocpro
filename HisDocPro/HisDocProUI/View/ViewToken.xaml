@@ -4,20 +4,35 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:HisDocProUI.View"
+             xmlns:view="clr-namespace:HisDocProUI.View"
+             Background="White"
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300">
     <Grid>
 
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="1*" />
+            <ColumnDefinition Width="6" />
+            <ColumnDefinition Width="1*" />
         </Grid.ColumnDefinitions>
 
         <Grid.RowDefinitions>
             <RowDefinition Height="24" />
             <RowDefinition Height="6" />
+            <RowDefinition Height="24" />
+            <RowDefinition Height="6" />
+            <RowDefinition Height="24" />
+            <RowDefinition Height="6" />
             <RowDefinition Height="*" />
-
         </Grid.RowDefinitions>
-        <Image Grid.Row="2" Grid.Column="0" Source="{Binding Image}"/>
+        
+        <Label Grid.Row="0" Grid.Column="0" Content="Label"/>
+        <TextBox Grid.Row="0" Grid.Column="2" Text="{Binding Label}"/>
+        <Label Grid.Row="2" Grid.Column="0" Content="Threshold"/>
+        <view:ViewValueDouble Grid.Row="2" Grid.Column="2" DataContext="{Binding Threshold}"/>
+        <Label Grid.Row="4" Grid.Column="0" Content="Weigth"/>
+        <view:ViewValueDouble Grid.Row="4" Grid.Column="2" DataContext="{Binding Weigth}"/>
+        
+        <Image Grid.Row="6" Grid.Column="0" Source="{Binding Image}"/>
     </Grid>
 </UserControl>

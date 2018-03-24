@@ -14,7 +14,7 @@ namespace HisDocProCL.Model
 {
     public class ModelValueInt : ReactiveObject
     {
-        public IModelApplication Application { get; }
+        private Action _action;
         public ReactiveCommand CommandSubtractOne { get; }
         public ReactiveCommand CommandAddOne { get; }
 
@@ -23,13 +23,13 @@ namespace HisDocProCL.Model
         {
             get { return this._value; }
             set { this.RaiseAndSetIfChanged(ref this._value, value);
-                Application.RenderLayout();
+                _action.Invoke();
             }
         }
 
-        public ModelValueInt(IModelApplication application, int value)
+        public ModelValueInt(Action action, int value)
         {
-            Application = application;
+            _action = action;
             _value = value;
             this.CommandSubtractOne = ReactiveCommand.Create(ExecuteSubtractOne);
             this.CommandAddOne = ReactiveCommand.Create(ExecuteAddOne);

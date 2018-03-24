@@ -10,20 +10,6 @@ using System.Threading.Tasks;
 
 namespace HisDocProCL.Model
 {
-    public class PageLayoutV001
-    {
-        public double Rotation;
-        public int Threshold;
-
-        public double LineSize;
-        public double LineOffset;
-        public int LineCount;
-
-        public double ColSize;
-        public double ColOffset;
-        public int ColCount;
-
-    }
 
     public class ModelPageLayout : ReactiveObject
     {
@@ -42,7 +28,6 @@ namespace HisDocProCL.Model
             get { return this._threshold; }
             set { this.RaiseAndSetIfChanged(ref this._threshold, value); }
         }
-
 
         private ModelValueDouble _lineSize;
         public ModelValueDouble LineSize
@@ -85,19 +70,21 @@ namespace HisDocProCL.Model
             set { this.RaiseAndSetIfChanged(ref this._colCount, value); }
         }
 
+
+
         public ModelPageLayout(IModelApplication application, string filePath, ModelPageLayout other)
         {
             _filePath = filePath;
-            this._rotation = new ModelValueDouble(application, 0);
-            this._threshold = new ModelValueInt(application, 0);
+            this._rotation = new ModelValueDouble(application.EventLayoutChanged, 0);
+            this._threshold = new ModelValueInt(application.EventLayoutChanged, 0);
 
-            this._lineSize = new ModelValueDouble(application, 0);
-            this._lineOffset = new ModelValueDouble(application, 0);
-            this._lineCount = new ModelValueInt(application, 0);
+            this._lineSize = new ModelValueDouble(application.EventLayoutChanged, 0);
+            this._lineOffset = new ModelValueDouble(application.EventLayoutChanged, 0);
+            this._lineCount = new ModelValueInt(application.EventLayoutChanged, 0);
 
-            this._colSize = new ModelValueDouble(application, 0);
-            this._colOffset = new ModelValueDouble(application, 0);
-            this._colCount = new ModelValueInt(application, 0);
+            this._colSize = new ModelValueDouble(application.EventLayoutChanged, 0);
+            this._colOffset = new ModelValueDouble(application.EventLayoutChanged, 0);
+            this._colCount = new ModelValueInt(application.EventLayoutChanged, 0);
 
             if (File.Exists(_filePath))
             {
@@ -170,6 +157,21 @@ namespace HisDocProCL.Model
             layout.ColOffset = ColOffset.Value;
             layout.ColCount = ColCount.Value;
             return layout;
+        }
+
+        public class PageLayoutV001
+        {
+            public double Rotation;
+            public int Threshold;
+
+            public double LineSize;
+            public double LineOffset;
+            public int LineCount;
+
+            public double ColSize;
+            public double ColOffset;
+            public int ColCount;
+
         }
     }
 }

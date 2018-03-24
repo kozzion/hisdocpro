@@ -2,6 +2,7 @@
 {
     public interface IModelApplication
     {
-        void RenderLayout();
+        void EventLayoutChanged();
+        void EventTokenChanged();
     }
 }
