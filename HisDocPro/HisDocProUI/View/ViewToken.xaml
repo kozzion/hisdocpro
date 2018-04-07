@@ -34,5 +34,7 @@
         <view:ViewValueDouble Grid.Row="4" Grid.Column="2" DataContext="{Binding Weigth}"/>
         
         <Image Grid.Row="6" Grid.Column="0" Source="{Binding Image}"/>
+        <Image Grid.Row="6" Grid.Column="2" Source="{Binding ImageProcessed}"/>
+        
     </Grid>
 </UserControl>

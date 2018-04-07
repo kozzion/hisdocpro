@@ -1,6 +1,8 @@
-﻿using HisDocProUI.Tools;
+﻿using AForge.Imaging.Filters;
+using HisDocProUI.Tools;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,6 +13,16 @@ namespace HisDocProCL
     {
         static void Main(string[] args)
         {
+            Bitmap bitmap_0 = new Bitmap(@"D:\Projects\hisdocpro\HisDocPro\HisDocProUI\bin\Debug\tokens\t_0_c000.png");
+            //Bitmap bitmap_0 = new Bitmap(PageFileSelected);
+            Bitmap bitmapTemp = new Grayscale(0.2125, 0.7154, 0.0721).Apply(bitmap_0);
+            bitmapTemp = new Threshold(100).Apply(bitmapTemp);
+            bitmapTemp = new Invert().Apply(bitmapTemp);
+
+            double[,] image = ToolsConvolution.BitMapToDoubleArray(bitmapTemp, 0.5);
+            double[,] kernel = ToolsConvolution.BitMapToDoubleArray(bitmapTemp, 0.5);
+            Print(image);
+            Print(kernel);
             //double[,] image = new double[6, 6];
             //image[2, 1] = 1;
             //image[2, 2] = 1;
@@ -28,8 +40,9 @@ namespace HisDocProCL
 
             //Print(result);
             //Console.ReadLine();
-
-            List<string> page = ToolsPDF.Convert(@"D:\Projects\hisdocpro\page.pdf");
+            double [,] result = ToolsConvolution.CorrelationFFT(image, kernel);
+            Print(result);
+            //List<string> page = ToolsPDF.Convert(@"D:\Projects\hisdocpro\page.pdf");
         }
 
         private static void Print(int[,] array)
@@ -51,7 +64,7 @@ namespace HisDocProCL
             {
                 for (int j = 0; j < array.GetLength(0); j++)
                 {
-                    Console.Write(array[i, j].ToString("0.") + " ");
+                    Console.Write(array[i, j].ToString("0.0") + " ");
                 }
                 Console.WriteLine();
             }

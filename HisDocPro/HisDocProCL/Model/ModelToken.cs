@@ -39,6 +39,13 @@ namespace HisDocProCL.Model
             set { this.RaiseAndSetIfChanged(ref this._image, value); }
         }
 
+        private ImageSource _imageProcessed;
+        public ImageSource ImageProcessed
+        {
+            get { return this._imageProcessed; }
+            set { this.RaiseAndSetIfChanged(ref this._imageProcessed, value); }
+        }
+
         private ModelValueDouble _threshold;
         public ModelValueDouble Threshold
         {
@@ -74,10 +81,12 @@ namespace HisDocProCL.Model
                 _bitmapSource = ToolsConvolution.ConvertTo24(_bitmapSource);
             }
 
-            Bitmap bitmapTemp = new Grayscale(0.2125, 0.7154, 0.0721).Apply(_bitmapSource);
-            bitmapTemp = new Threshold(100).Apply(bitmapTemp);
+            Bitmap bitmapTemp = new Grayscale(1, 0, 0).Apply(_bitmapSource);
+            bitmapTemp = new Erosion().Apply(bitmapTemp);
+            bitmapTemp = new Threshold(160).Apply(bitmapTemp);
             bitmapTemp = new Invert().Apply(bitmapTemp);
-            _kernel = ToolsConvolution.BitMapToDoubleArray(bitmapTemp);
+
+            _kernel = ToolsConvolution.BitMapToDoubleArray(bitmapTemp, 0.5);
             _threshold = new ModelValueDouble(application.EventTokenChanged, 0);
             _weigth = new ModelValueDouble(application.EventTokenChanged, 0);
 
@@ -85,6 +94,12 @@ namespace HisDocProCL.Model
             ModelRendererBitmapSource renderer = new ModelRendererBitmapSource(_bitmapSource);
             renderer.Render();
             Image = renderer.RenderedImage;
+
+
+
+            ModelRendererBitmapSource rendererProcessed = new ModelRendererBitmapSource(bitmapTemp);
+            rendererProcessed.Render();
+            ImageProcessed = rendererProcessed.RenderedImage;
 
             if (File.Exists(filePathJson))
             {

@@ -12,66 +12,63 @@ namespace HisDocProUI.Tools
 {
     public class ToolsConvolution
     {
-        public static double[,] Conv(int[,] image, int[,] kernel)
-        {
-            return BitMapToDoubleArray( new Convolution(kernel).Apply(IntArrayToBitMap(image)));
-        }
-
-        public static double[,] ConvolutionFFT(int[,] image, int[,] kernel)
-        {
-            int maxSize = Math.Max(Math.Max(Math.Max(image.GetLength(0), image.GetLength(1)), kernel.GetLength(0)), kernel.GetLength(1));
-            int size = 1;
-            while (size < maxSize)
-            { 
-                size *= 2;
-            }
-            size *= 2;
-            Console.WriteLine(size);
-
-            //Create complext image
-            Complex[,] image_complex = new Complex[size, size];    
-            for (int i = 0; i < image.GetLength(0); i++)
-            {
-                for (int j = 0; j < image.GetLength(1); j++)
-                {
-                    image_complex[i,j] = new Complex(image[i,j], 0);
-                }
-            }
-            //Create complext kernel
-            Complex[,] kernel_complexl = new Complex[size, size];
-            for (int i = 0; i < kernel.GetLength(0); i++)
-            {
-                for (int j = 0; j < kernel.GetLength(1); j++)
-                {
-                    kernel_complexl[i, j] = new Complex(kernel[i, j], 0);
-                }
-            }
-            kernel_complexl[0, 0] = new Complex(1, 0);
-            //Do work
-            FourierTransform.FFT2(image_complex, FourierTransform.Direction.Forward);
-            FourierTransform.FFT2(kernel_complexl, FourierTransform.Direction.Forward);
-            for (int i = 0; i < size; i++)
-            {
-                for (int j = 0; j < size; j++)
-                {
-                    image_complex[i, j] = image_complex[i, j] * new Complex(kernel_complexl[i, j].Re, -kernel_complexl[i, j].Im);
-                }
-            }
-            FourierTransform.FFT2(image_complex, FourierTransform.Direction.Backward);
 
 
-            //Do get result
-            double normalization = size * size;
-            double[,] result = new double[image.GetLength(0), image.GetLength(1)];
-            for (int i = 0; i < result.GetLength(0); i++)
-            {
-                for (int j = 0; j < result.GetLength(0); j++)
-                {
-                    result[i, j] = image_complex[i, j].Re * normalization;
-                }
-            }
-            return result;
-        }
+        //public static double[,] ConvolutionFFT(int[,] image, int[,] kernel)
+        //{
+        //    int maxSize = Math.Max(Math.Max(Math.Max(image.GetLength(0), image.GetLength(1)), kernel.GetLength(0)), kernel.GetLength(1));
+        //    int size = 1;
+        //    while (size < maxSize)
+        //    { 
+        //        size *= 2;
+        //    }
+        //    size *= 2;
+        //    Console.WriteLine(size);
+
+        //    //Create complext image
+        //    Complex[,] image_complex = new Complex[size, size];    
+        //    for (int i = 0; i < image.GetLength(0); i++)
+        //    {
+        //        for (int j = 0; j < image.GetLength(1); j++)
+        //        {
+        //            image_complex[i,j] = new Complex(image[i,j], 0);
+        //        }
+        //    }
+        //    //Create complext kernel
+        //    Complex[,] kernel_complexl = new Complex[size, size];
+        //    for (int i = 0; i < kernel.GetLength(0); i++)
+        //    {
+        //        for (int j = 0; j < kernel.GetLength(1); j++)
+        //        {
+        //            kernel_complexl[i, j] = new Complex(kernel[i, j], 0);
+        //        }
+        //    }
+        //    kernel_complexl[0, 0] = new Complex(1, 0);
+        //    //Do work
+        //    FourierTransform.FFT2(image_complex, FourierTransform.Direction.Forward);
+        //    FourierTransform.FFT2(kernel_complexl, FourierTransform.Direction.Forward);
+        //    for (int i = 0; i < size; i++)
+        //    {
+        //        for (int j = 0; j < size; j++)
+        //        {
+        //            image_complex[i, j] = image_complex[i, j] * new Complex(kernel_complexl[i, j].Re, -kernel_complexl[i, j].Im);
+        //        }
+        //    }
+        //    FourierTransform.FFT2(image_complex, FourierTransform.Direction.Backward);
+
+
+        //    //Do get result
+        //    double normalization = size * size;
+        //    double[,] result = new double[image.GetLength(0), image.GetLength(1)];
+        //    for (int i = 0; i < result.GetLength(0); i++)
+        //    {
+        //        for (int j = 0; j < result.GetLength(0); j++)
+        //        {
+        //            result[i, j] = image_complex[i, j].Re * normalization;
+        //        }
+        //    }
+        //    return result;
+        //}
 
 
         public static double[,] CorrelationFFT(double[,] image, double[,] kernel)
@@ -156,16 +153,6 @@ namespace HisDocProUI.Tools
         }
 
 
-        public static double [,] CorrelationFFT(Bitmap image, Bitmap kernel)
-        {
-            return CorrelationFFT(BitMapToDoubleArray(image), BitMapToDoubleArray(kernel));
-        }
-
-        public static double[,] CorrelationFFT(double[,] image, Bitmap kernel)
-        {
-            return CorrelationFFT(image, BitMapToDoubleArray(kernel));
-        }
-
         public static int[,] BitMapToIntArray(Bitmap source)
         {
             int[,] array = new int[source.Width, source.Height];
@@ -182,25 +169,25 @@ namespace HisDocProUI.Tools
             return array;
         }
 
-        public static double[,] BitMapToDoubleArray(Bitmap source, bool flip_horizontal = false)
+        public static double[,] BitMapToDoubleArray(Bitmap source, double threshold)
         {
             double[,] array = new double[source.Width, source.Height];
             for (int i = 0; i < source.Width; i++)
             {
                 for (int j = 0; j < source.Height; j++)
                 {
-                 
+
                     int r = source.GetPixel(i, j).R;
                     int g = source.GetPixel(i, j).G;
                     int b = source.GetPixel(i, j).B;
-                    if (flip_horizontal)
+                    double gray = (r * 0.2125 + g * 0.7154 + b * 0.0721);
+                    if (threshold < gray)
                     {
-                        array[source.Width - (i + 1), source.Height - (j + 1)] = (r * 0.2125 + g * 0.7154 + b * 0.0721);
-
+                        array[i, j] = 1.0;
                     }
                     else
                     {
-                        array[i, j] = (r * 0.2125 + g * 0.7154 + b * 0.0721);
+                        array[i, j] = -1.0;
                     }
                 }
             }

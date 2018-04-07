@@ -254,9 +254,10 @@ namespace HisDocProUI.Model
             rl_list.AddRange(linesV);
 
             //Convert to gray
-            var imageGray = new Grayscale(0.2125, 0.7154, 0.0721).Apply(bitmapRot);
-            var imageBin = new Threshold(100).Apply(imageGray);
-            var imageBinInvert = new Invert().Apply(imageBin);
+            Bitmap bitmapTemp = new Grayscale(1, 0, 0).Apply(bitmapRot);
+            bitmapTemp = new Erosion().Apply(bitmapTemp);
+            bitmapTemp = new Threshold(160).Apply(bitmapTemp);
+            bitmapTemp = new Invert().Apply(bitmapTemp);
 
 
             //Tuple<List<ConnectedComponent>, double, double>[] componentSectionList = new Tuple<List<ConnectedComponent>, double, double>[1];
@@ -268,11 +269,11 @@ namespace HisDocProUI.Model
                 for (int colIndex = 0; colIndex < PageLayout.ColCount.Value; colIndex++)
                 {
                     //TODO add margin?
-                    int x = (int)((PageLayout.ColSize.Value * colIndex) + PageLayout.ColOffset.Value) - PageLayout.Margin.Value;
+                    int x = (int)((PageLayout.ColSize.Value * colIndex) + PageLayout.ColOffset.Value);// - PageLayout.Margin.Value;
                     int y = (int)((PageLayout.LineSize.Value * lineIndex) + PageLayout.LineOffset.Value) - PageLayout.Margin.Value;
-                    int w = (int)PageLayout.ColSize.Value + (PageLayout.Margin.Value * 2);
+                    int w = (int)PageLayout.ColSize.Value;// + (PageLayout.Margin.Value * 2);
                     int h = (int)PageLayout.LineSize.Value + (PageLayout.Margin.Value * 2);
-                    Bitmap bitmap = new Crop(new Rectangle(x, y, w, h)).Apply(imageBinInvert);
+                    Bitmap bitmap = new Crop(new Rectangle(x, y, w, h)).Apply(bitmapTemp);
                     List<ConnectedComponent> lineComponentList = new List<ConnectedComponent>();
                     lineComponentList = GetTokens(bitmap);
                     componentTable[lineIndex,colIndex] = new Tuple<List<ConnectedComponent>, double, double>(lineComponentList, x, y);
@@ -354,7 +355,7 @@ namespace HisDocProUI.Model
         {
             List<ConnectedComponent>[] component_list_array = new List<ConnectedComponent>[TokenList.Count];
 
-            double[,] imageDouble = ToolsConvolution.BitMapToDoubleArray(bitmapTemp);
+            double[,] imageDouble = ToolsConvolution.BitMapToDoubleArray(bitmapTemp, 0.5);
 
             Parallel.For(0, TokenList.Count, tokenIndex =>
             {
