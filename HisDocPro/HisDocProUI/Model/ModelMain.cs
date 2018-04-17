@@ -291,7 +291,7 @@ namespace HisDocProUI.Model
                     string_table[i,j] = TokensToString(componentTable[i,j].Item1, 3, " ");
                 }
             }
-            string csvFileSelected = PageFileSelected.Replace(".png", ".csv");
+            string csvFileSelected = LayoutFileSelected.Replace(".png", ".csv");
             ToolsIOCSV.WriteCSVFile(csvFileSelected, string_table, KozzionCore.IO.CSV.Delimiter.SemiColon);           
         }
 
@@ -311,7 +311,7 @@ namespace HisDocProUI.Model
                 return "";
             }
 
-            component.Sort((x, y) => (x.MeanX - x.Width).CompareTo(y.MeanX - y.Width));
+            component.Sort((x, y) => (x.MeanX).CompareTo(y.MeanX));
             
             //Remove overlapping kokens here
             int tokenIndex = 1;
@@ -454,8 +454,7 @@ namespace HisDocProUI.Model
             int left = (int)comp.MeanX + (int)offsetX;
             int top = (int)comp.MeanY + (int)offSetY;
 
-            Rectangle rect = new Rectangle(left, top, comp.Width, comp.Height);
-            
+            Rectangle rect = new Rectangle(left, top, comp.Width, comp.Height);            
 
             Graphics g = Graphics.FromImage(bitmap);
 
@@ -515,7 +514,5 @@ namespace HisDocProUI.Model
                 PageFileSelected = PageFileList[0];
             }
         }
-
-
     }
 }
